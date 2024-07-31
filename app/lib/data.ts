@@ -349,8 +349,10 @@ export async function fetchRecords(projectId: string) {
 export async function createTask(recordId: string, name: string, description: string, assignedTo: string, dueDate: Date) {
   try {
     const id = uuidv4();
+     // Convert dueDate to ISO string format
+     const dueDateISO = dueDate.toISOString();
     await sql`INSERT INTO tasks (id, record_id, name, description, status, assigned_to, due_date, created_at)
-              VALUES (${id}, ${recordId}, ${name}, ${description}, 'To Do', ${assignedTo}, ${dueDate}, CURRENT_TIMESTAMP)`;
+              VALUES (${id}, ${recordId}, ${name}, ${description}, 'To Do', ${assignedTo}, ${dueDateISO}, CURRENT_TIMESTAMP)`;
     return id;
   } catch (error) {
     console.error('Database Error:', error);
@@ -372,8 +374,11 @@ export async function fetchTasks(recordId: string) {
 export async function createInvitation(companyId: string, email: string, token: string, expiresAt: Date) {
   try {
     const id = uuidv4();
+     
+    // Convert exirestAt to ISO string format
+     const expiresAtISO = expiresAt.toISOString();
     await sql`INSERT INTO invitations (id, company_id, email, token, expires_at, status)
-              VALUES (${id}, ${companyId}, ${email}, ${token}, ${expiresAt}, 'Pending')`;
+              VALUES (${id}, ${companyId}, ${email}, ${token}, ${expiresAtISO}, 'Pending')`;
     return id;
   } catch (error) {
     console.error('Database Error:', error);
