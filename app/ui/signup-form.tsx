@@ -9,17 +9,17 @@ import { Button } from '@/app/ui/button';
 import { signup } from '@/app/lib/actions';
 
 export default function SignupForm() {
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage(null);
     setIsPending(true);
 
     // Create FormData object from the form
-    const formData = new FormData(event.target);
+    const formData = new FormData(event.currentTarget);
 
     // Debug: Check if formData is properly formed
     console.log('Form Data:', formData);
