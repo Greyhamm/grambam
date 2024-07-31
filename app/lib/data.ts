@@ -6,8 +6,21 @@ import {
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
+  //New Kanban ones
+  User,
+  Company,
+  UserRole,
+  Project,
+  Record,
+  Task,
+  Invitation,
+  Comment,
 } from './definitions';
 import { formatCurrency } from './utils';
+
+
+import { v4 as uuidv4 } from 'uuid'; // To generate UUIDs for new entries
+
 
 export async function fetchRevenue() {
   try {
@@ -213,5 +226,190 @@ export async function fetchFilteredCustomers(query: string) {
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch customer table.');
+  }
+}
+
+//Start of KanBan functions
+// User Management
+export async function createUser(username: string, email: string, passwordHash: string) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO userz (id, username, email, password_hash, created_at)
+              VALUES (${id}, ${username}, ${email}, ${passwordHash}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create user.');
+  }
+}
+
+export async function fetchUserById(id: string) {
+  try {
+    const data = await sql<User>`SELECT * FROM userz WHERE id = ${id}`;
+    return data.rows[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch user.');
+  }
+}
+
+// Company Management
+export async function createCompany(name: string, createdBy: string) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO companies (id, name, created_by, created_at)
+              VALUES (${id}, ${name}, ${createdBy}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create company.');
+  }
+}
+
+export async function fetchCompanies() {
+  try {
+    const data = await sql<Company>`SELECT * FROM companies ORDER BY name ASC`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch companies.');
+  }
+}
+
+// User Roles Management
+export async function addUserToCompany(userId: string, companyId: string, role: string) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO user_roles (id, user_id, company_id, role, joined_at)
+              VALUES (${id}, ${userId}, ${companyId}, ${role}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to add user to company.');
+  }
+}
+
+export async function fetchUserRoles(userId: string) {
+  try {
+    const data = await sql<UserRole>`SELECT * FROM user_roles WHERE user_id = ${userId}`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch user roles.');
+  }
+}
+
+// Project Management
+export async function createProject(companyId: string, name: string, description: string) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO projects (id, company_id, name, description, created_at)
+              VALUES (${id}, ${companyId}, ${name}, ${description}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create project.');
+  }
+}
+
+export async function fetchProjects(companyId: string) {
+  try {
+    const data = await sql<Project>`SELECT * FROM projects WHERE company_id = ${companyId} ORDER BY created_at DESC`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch projects.');
+  }
+}
+
+// Record Management
+export async function createRecord(projectId: string, name: string, description: string) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO records (id, project_id, name, description, created_at)
+              VALUES (${id}, ${projectId}, ${name}, ${description}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create record.');
+  }
+}
+
+export async function fetchRecords(projectId: string) {
+  try {
+    const data = await sql<Record>`SELECT * FROM records WHERE project_id = ${projectId} ORDER BY created_at DESC`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch records.');
+  }
+}
+
+// Task Management
+export async function createTask(recordId: string, name: string, description: string, assignedTo: string, dueDate: Date) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO tasks (id, record_id, name, description, status, assigned_to, due_date, created_at)
+              VALUES (${id}, ${recordId}, ${name}, ${description}, 'To Do', ${assignedTo}, ${dueDate}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create task.');
+  }
+}
+
+export async function fetchTasks(recordId: string) {
+  try {
+    const data = await sql<Task>`SELECT * FROM tasks WHERE record_id = ${recordId} ORDER BY created_at DESC`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch tasks.');
+  }
+}
+
+// Invitation Management
+export async function createInvitation(companyId: string, email: string, token: string, expiresAt: Date) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO invitations (id, company_id, email, token, expires_at, status)
+              VALUES (${id}, ${companyId}, ${email}, ${token}, ${expiresAt}, 'Pending')`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create invitation.');
+  }
+}
+
+export async function fetchInvitations(companyId: string) {
+  try {
+    const data = await sql<Invitation>`SELECT * FROM invitations WHERE company_id = ${companyId} ORDER BY expires_at DESC`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch invitations.');
+  }
+}
+
+// Comment Management
+export async function createComment(taskId: string, userId: string, content: string) {
+  try {
+    const id = uuidv4();
+    await sql`INSERT INTO comments (id, task_id, user_id, content, created_at)
+              VALUES (${id}, ${taskId}, ${userId}, ${content}, CURRENT_TIMESTAMP)`;
+    return id;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create comment.');
+  }
+}
+
+export async function fetchComments(taskId: string) {
+  try {
+    const data = await sql<Comment>`SELECT * FROM comments WHERE task_id = ${taskId} ORDER BY created_at ASC`;
+    return data.rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch comments.');
   }
 }

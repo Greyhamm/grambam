@@ -86,3 +86,64 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+// New types for Kanban-style functionality
+
+export type UserRole = {
+  id: string;
+  user_id: string;
+  company_id: string;
+  role: string; // e.g., 'Manager', 'Employee'
+  joined_at: string;
+};
+
+export type Company = {
+  id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+};
+
+export type Project = {
+  id: string;
+  company_id: string;
+  name: string;
+  description: string;
+  created_at: string;
+};
+
+export type Record = {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string;
+  created_at: string;
+};
+
+export type Task = {
+  id: string;
+  record_id: string;
+  name: string;
+  description: string;
+  status: 'To Do' | 'In Progress' | 'Done';
+  assigned_to: string | null;
+  due_date: string | null;
+  created_at: string;
+};
+
+export type Invitation = {
+  id: string;
+  company_id: string;
+  email: string;
+  token: string;
+  expires_at: string;
+  status: 'Pending' | 'Accepted' | 'Expired';
+};
+
+export type Comment = {
+  id: string;
+  task_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+};

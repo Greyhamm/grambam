@@ -8,8 +8,18 @@ import bcrypt from 'bcrypt';
  
 async function getUser(email: string): Promise<User | undefined> {
   try {
-    const user = await sql<User>`SELECT * FROM users WHERE email=${email}`;
-    return user.rows[0];
+    const result = await sql<User>`SELECT * FROM userz WHERE email = ${email}`;
+    const user = result.rows[0];
+    
+    // Debug: Check if user and password_hash are correctly fetched
+    console.log('Fetched User:', user);
+
+    if (!user) {
+      console.error('User not found.');
+      return undefined;
+    }
+
+    return user;
   } catch (error) {
     console.error('Failed to fetch user:', error);
     throw new Error('Failed to fetch user.');
@@ -17,26 +27,36 @@ async function getUser(email: string): Promise<User | undefined> {
 }
  
 export const { auth, signIn, signOut } = NextAuth({
-  ...authConfig,
-  providers: [
-    Credentials({
-      async authorize(credentials) {
-        const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
-          .safeParse(credentials);
- 
-        if (parsedCredentials.success) {
+    ...authConfig,
+    providers: [
+      Credentials({
+        async authorize(credentials) {
+          const parsedCredentials = z
+            .object({ email: z.string().email(), password: z.string().min(6) })
+            .safeParse(credentials);
+  
+          if (!parsedCredentials.success) {
+            console.error('Invalid credentials format:', parsedCredentials.error);
+            return null;
+          }
+  
           const { email, password } = parsedCredentials.data;
           const user = await getUser(email);
-          if (!user) return null;
-          const passwordsMatch = await bcrypt.compare(password, user.password);
- 
-          if (passwordsMatch) return user;
-        }
- 
-        console.log('Invalid credentials');
-        return null;
-      },
-    }),
-  ],
-});
+  
+          if (!user || !user.password_hash) {
+            console.error('Invalid user or missing password hash.');
+            return null;
+          }
+  
+          const passwordsMatch = await bcrypt.compare(password, user.password_hash);
+  
+          if (passwordsMatch) {
+            return { id: user.id, name: user.name, email: user.email };
+          }
+  
+          console.log('Invalid credentials');
+          return null;
+        },
+      }),
+    ],
+  });

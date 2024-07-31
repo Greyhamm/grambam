@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
-
+import { hash } from 'bcrypt';
 const FormSchema = z.object({
     id: z.string(),
     customerId: z.string({
@@ -23,6 +23,7 @@ const FormSchema = z.object({
    
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+
 export type State = {
   errors?: {
     customerId?: string[];
@@ -134,5 +135,34 @@ export async function authenticate(
       }
     }
     throw error;
+  }
+}
+
+const SignupSchema = z.object({
+  name: z.string().min(1, 'Name is required.'),
+  email: z.string().email('Invalid email address.'),
+  password: z.string().min(6, 'Password must be at least 6 characters long.'),
+});
+
+export async function signup(formData: FormData) {
+  const data = Object.fromEntries(formData.entries());
+  const validation = SignupSchema.safeParse(data);
+
+  if (!validation.success) {
+    const errorMessage = validation.error.flatten().formErrors.join(' ');
+    return { error: errorMessage };
+  }
+
+  const { name, email, password } = validation.data;
+
+  try {
+    const passwordHash = await hash(password, 10);
+    await sql`
+      INSERT INTO userz (username, email, password_hash, created_at)
+      VALUES (${name}, ${email}, ${passwordHash}, CURRENT_TIMESTAMP)
+    `;
+    return { success: true };
+  } catch (error) {
+    return { error: 'Failed to create an account. Please try again later.' };
   }
 }
